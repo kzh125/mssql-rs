@@ -288,9 +288,8 @@ TEST_F(TransactionLiveTest, AutocommitInsertIsImmediatelyDurable) {
 // prior response had been fully drained and autocommit was in effect the
 // whole time. Must pass identically on msodbcsql, which never had this bug.
 TEST_F(TransactionLiveTest, SequentialAutocommitQueriesToleratePriorTransactionProc) {
-    ExecDirectIgnoreError("DROP PROCEDURE IF EXISTS dbo.mssql_rs_587_repro");
     Exec(
-        "CREATE PROCEDURE dbo.mssql_rs_587_repro AS "
+        "CREATE PROCEDURE #mssql_rs_587_repro AS "
         "BEGIN SET NOCOUNT ON; BEGIN TRANSACTION; COMMIT TRANSACTION; END");
 
     // Several plain autocommit queries, each fully drained before the next is
@@ -304,11 +303,9 @@ TEST_F(TransactionLiveTest, SequentialAutocommitQueriesToleratePriorTransactionP
 
     // The procedure begins and commits its own transaction. Before the fix
     // this failed with SQL Server error 3981.
-    SQLRETURN rc = Run(stmt_, "EXEC dbo.mssql_rs_587_repro");
+    SQLRETURN rc = Run(stmt_, "EXEC #mssql_rs_587_repro");
     ASSERT_SQL_OK(rc, SQL_HANDLE_STMT, stmt_);
     SQLCloseCursor(stmt_);
-
-    ExecDirectIgnoreError("DROP PROCEDURE IF EXISTS dbo.mssql_rs_587_repro");
 }
 
 // msodbcsql returns plain SQL_SUCCESS when no transaction was ever started —
